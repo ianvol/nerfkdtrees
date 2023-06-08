@@ -1,6 +1,8 @@
 import math
 import typing
 from typing import Tuple
+
+import numpy as np
 import plotly.graph_objects as go
 from scipy.spatial import KDTree
 
@@ -61,6 +63,29 @@ class Points:
         kd_tree = KDTree(coordinates)
         return kd_tree
 
+    @staticmethod
+    def convert_rays_to_points(rays, kd_tree, max_distance):
+        points = []
+        for ray in rays:
+            origin, direction = ray
+
+            # Perform ray marching until the maximum distance is reached or an intersection occurs
+            t = 0.0
+            while t < max_distance:
+                point = origin + t * direction
+
+                # Query the KD tree for the closest point
+                dist, idx = kd_tree.query(point)
+
+                # Check if the distance to the closest point is within a tolerance
+                if dist < 0.001:
+                    points.append(point)
+                    break
+
+                t += dist
+
+        return points
+
 
 def plot_point_3d():
     points = Points.generate_points_at_inclinations(10, [i for i in range(0, 191, 30)])
@@ -84,6 +109,17 @@ def plot_point_3d():
             'neighbors': [points[j] for j in neighbors if j != i]
         }
         nodes_with_neighbors.append(node)
+
+        # Generate rays
+        rays = []
+        for i in range(len(points)):
+            origin = np.array([x[i], y[i], z[i]])
+            direction = np.array([0.0, 0.0, 1.0])  # Example direction, modify as needed
+            rays.append((origin, direction))
+
+        # Convert rays to 3D points using the KD tree
+        max_distance = 10.0  # Maximum distance to march along each ray
+        converted_points = Points.convert_rays_to_points(rays, kd_tree, max_distance)
 
     fig = go.Figure(
         data=[
