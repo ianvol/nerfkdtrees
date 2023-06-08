@@ -121,6 +121,9 @@ def plot_point_3d():
         max_distance = 10.0  # Maximum distance to march along each ray
         converted_points = Points.convert_rays_to_points(rays, kd_tree, max_distance)
 
+        for point in converted_points:
+            print(point)
+
     fig = go.Figure(
         data=[
             go.Scatter3d(
